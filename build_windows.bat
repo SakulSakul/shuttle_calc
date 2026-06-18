@@ -1,47 +1,51 @@
 @echo off
 REM ============================================================
-REM  ì…”í‹€ë²„ìŠ¤ ì •ì‚° â€” Windows onedir ì‹¤í–‰íŒŒì¼(.exe) ë¹Œë“œ ìŠ¤í¬ë¦½íŠ¸
-REM  ë°˜ë“œì‹œ Windows ì—ì„œ ì‹¤í–‰í•  ê²ƒ (í¬ë¡œìŠ¤ ë¹Œë“œ ë¶ˆê°€).
-REM  ê²°ê³¼ë¬¼: dist\ì…”í‹€ë²„ìŠ¤ì •ì‚°\  í´ë” + ì…”í‹€ë²„ìŠ¤ì •ì‚°_win.zip
+REM  ¼ÅÆ²¹ö½º Á¤»ê - Windows onedir ½ÇÇàÆÄÀÏ(.exe) ºôµå ½ºÅ©¸³Æ®
+REM  ¹İµå½Ã Windows ¿¡¼­ ½ÇÇàÇÒ °Í (Å©·Î½º ºôµå ºÒ°¡).
+REM  °á°ú¹°: dist\¼ÅÆ²¹ö½ºÁ¤»ê\ Æú´õ + ¼ÅÆ²¹ö½ºÁ¤»ê_win.zip
 REM ============================================================
 setlocal
-chcp 65001 >nul
 cd /d "%~dp0"
 
-echo [1/4] ì•± ì˜ì¡´ì„± ì„¤ì¹˜...
-pip install -r requirements.txt || goto :err
+REM [0/4] pythoncore(Scripts ¹Ìµî·Ï) ´ëÀÀ: Scripts Æú´õ¸¦ PATH ¿¡ ÀÓ½Ã Ãß°¡
+for /f "delims=" %%i in ('py -c "import sysconfig;print(sysconfig.get_path('scripts'))"') do set "SCRIPTS=%%i"
+set "PATH=%SCRIPTS%;%PATH%"
 
-echo [2/4] ë¹Œë“œ ë„êµ¬ ì„¤ì¹˜ (requirements ì™€ ë³„ê°œ)...
-pip install streamlit-desktop-app || goto :err
+echo [1/4] ¾Û ÀÇÁ¸¼º ¼³Ä¡...
+py -m pip install -r requirements.txt || goto :err
 
-echo [3/4] onedir ë¹Œë“œ ( --onefile ë¯¸ì‚¬ìš© = PyInstaller ê¸°ë³¸ onedir )...
-REM  settlement.py / excel_format.py ëŠ” app.py ê°€ import í•˜ë¯€ë¡œ ë³´í†µ ìë™ í¬í•¨ë˜ì§€ë§Œ,
-REM  ëˆ„ë½ ë°©ì§€ë¥¼ ìœ„í•´ --add-data ë¡œ ëª…ì‹œ.
-REM  streamlit ë©”íƒ€ë°ì´í„°/ì •ì íŒŒì¼ ëˆ„ë½ ëŒ€ë¹„: --copy-metadata / --collect-all ì¶”ê°€.
+echo [2/4] ºôµå µµ±¸ ¼³Ä¡ (requirements ¿Í º°°³)...
+py -m pip install streamlit-desktop-app || goto :err
+
+echo [3/4] onedir ºôµå ( --onefile ¹Ì»ç¿ë = PyInstaller ±âº» onedir )...
+REM  settlement.py / excel_format.py ´Â app.py °¡ import ÇÏ¹Ç·Î º¸Åë ÀÚµ¿ Æ÷ÇÔµÇÁö¸¸,
+REM  ´©¶ô ¹æÁö¸¦ À§ÇØ --add-data ·Î ¸í½Ã. tkinter ÀúÀå ´ëÈ­»óÀÚ ´ëºñ --collect-all tkinter.
+REM  streamlit ¸ŞÅ¸µ¥ÀÌÅÍ/Á¤ÀûÆÄÀÏ ´©¶ô ´ëºñ --copy-metadata / --collect-all streamlit Ãß°¡.
 streamlit-desktop-app build app.py ^
-  --name ì…”í‹€ë²„ìŠ¤ì •ì‚° ^
+  --name ¼ÅÆ²¹ö½ºÁ¤»ê ^
   --icon icon.ico ^
   --pyinstaller-options --noconfirm ^
     --add-data "settlement.py;." ^
     --add-data "excel_format.py;." ^
     --copy-metadata streamlit ^
-    --collect-all streamlit || goto :err
+    --collect-all streamlit ^
+    --collect-all tkinter || goto :err
 
-echo [4/4] ëª¨ë“ˆ í¬í•¨ ì—¬ë¶€ í™•ì¸ ë° zip íŒ¨í‚¤ì§•...
-if not exist "dist\ì…”í‹€ë²„ìŠ¤ì •ì‚°\" (
-  echo [ì˜¤ë¥˜] dist\ì…”í‹€ë²„ìŠ¤ì •ì‚°\ í´ë”ê°€ ìƒì„±ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.
+echo [4/4] ¸ğµâ Æ÷ÇÔ ¿©ºÎ È®ÀÎ ¹× zip ÆĞÅ°Â¡...
+if not exist "dist\¼ÅÆ²¹ö½ºÁ¤»ê\" (
+  echo [¿À·ù] dist\¼ÅÆ²¹ö½ºÁ¤»ê\ Æú´õ°¡ »ı¼ºµÇÁö ¾Ê¾Ò½À´Ï´Ù.
   goto :err
 )
-REM  ë°°í¬ ì‚°ì¶œë¬¼ zip ìƒì„±
-powershell -NoProfile -Command "Compress-Archive -Path 'dist\ì…”í‹€ë²„ìŠ¤ì •ì‚°\*' -DestinationPath 'ì…”í‹€ë²„ìŠ¤ì •ì‚°_win.zip' -Force" || goto :err
+REM  ¹èÆ÷ »êÃâ¹° zip »ı¼º
+powershell -NoProfile -Command "Compress-Archive -Path 'dist\¼ÅÆ²¹ö½ºÁ¤»ê\*' -DestinationPath '¼ÅÆ²¹ö½ºÁ¤»ê_win.zip' -Force" || goto :err
 
 echo.
-echo âœ… ë¹Œë“œ ì™„ë£Œ: dist\ì…”í‹€ë²„ìŠ¤ì •ì‚°\ì…”í‹€ë²„ìŠ¤ì •ì‚°.exe
-echo âœ… ë°°í¬ zip : ì…”í‹€ë²„ìŠ¤ì •ì‚°_win.zip
-echo    (ë°°í¬ PC ìš”êµ¬ì‚¬í•­: Edge WebView2 + .NET 4.x â€” ë³´í†µ Win10/11 ê¸°ë³¸ í¬í•¨)
+echo [¿Ï·á] ºôµå ¼º°ø: dist\¼ÅÆ²¹ö½ºÁ¤»ê\¼ÅÆ²¹ö½ºÁ¤»ê.exe
+echo [¿Ï·á] ¹èÆ÷ zip : ¼ÅÆ²¹ö½ºÁ¤»ê_win.zip
+echo    (¹èÆ÷ PC ¿ä±¸»çÇ×: Edge WebView2 + .NET 4.x - º¸Åë Win10/11 ±âº» Æ÷ÇÔ)
 goto :eof
 
 :err
 echo.
-echo âŒ ë¹Œë“œ ì‹¤íŒ¨. ìœ„ ë¡œê·¸ë¥¼ í™•ì¸í•˜ì„¸ìš”.
+echo [½ÇÆĞ] ºôµå ½ÇÆĞ. À§ ·Î±×¸¦ È®ÀÎÇÏ¼¼¿ä.
 exit /b 1
