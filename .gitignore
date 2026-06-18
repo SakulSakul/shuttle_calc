@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+
+# PyInstaller / streamlit-desktop-app 빌드 산출물
+build/
+dist/
+*.spec
+셔틀버스정산_win.zip

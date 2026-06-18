@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO
 
 from settlement import (
     MissingColumnsError,
     build_settlement,
     read_csv_with_fallback,
 )
+from excel_format import build_styled_xlsx
 
 st.set_page_config(page_title="셔틀버스 정산 자동화", layout="wide")
 st.title("🚌 신세계면세점 셔틀버스 정산 자동화 시스템")
@@ -38,11 +38,7 @@ if uploaded_file is not None:
         st.subheader("📊 정산 결과 미리보기")
         st.dataframe(final_df)
 
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            unique_passengers.to_excel(writer, sheet_name='실제_탑승인원_명단', index=False)
-            final_df.to_excel(writer, sheet_name='협력사별_지원금액_총계', index=False)
-        processed_data = output.getvalue()
+        processed_data = build_styled_xlsx(unique_passengers, final_df, support_amount)
 
         st.download_button(
             label="📥 완성된 정산 엑셀 파일 다운로드", data=processed_data,
