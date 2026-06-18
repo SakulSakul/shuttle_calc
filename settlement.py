@@ -8,6 +8,25 @@ KEY_COLS = ['태그ID', '탑승자', '협력회사명', '운영사']
 # 입력 파일에 반드시 존재해야 하는 컬럼
 REQUIRED_COLS = ['운영사', '태그ID', '탑승자', '협력회사명', '사업자등록번호', '기업규모']
 
+# pivot index 키가 비어있을 때 사용할 명시 라벨 (NaN 그룹 누락 방지용)
+INDEX_FILL = {'협력회사명': '미상', '사업자등록번호': '미상', '기업규모': '미확인'}
+# 빈 값으로 간주하는 토큰 (문자열화 후 소문자 비교)
+_MISSING_TOKENS = {'', 'nan', 'none', 'nat', '<na>', 'null'}
+
+
+def _normalize_index_key(series, label):
+    """index 키 컬럼을 정규화한다.
+
+    문자열로 보고 앞뒤 공백을 제거한 뒤, 빈 문자열·'nan'·NaN 등 결측 토큰을
+    명시 라벨로 치환한다. pivot_table/groupby 가 NaN 그룹을 통째로 제외하는
+    사일런트 드롭을 차단하기 위함이며, 값은 '라벨'로만 남고 계산엔 영향이 없다.
+    """
+    s = series.astype(str).str.strip()
+    # pandas 3.0의 astype(str)는 결측을 'nan' 문자열로 바꾸지 않고 NA로 보존하므로,
+    # 원본 NaN과 결과 NA를 명시적으로 함께 결측으로 잡아야 한다.
+    is_missing = series.isna() | s.isna() | s.str.lower().isin(_MISSING_TOKENS).fillna(True)
+    return s.mask(is_missing, label)
+
 
 class MissingColumnsError(ValueError):
     """필수 컬럼이 누락되었을 때 발생."""
@@ -39,6 +58,12 @@ def build_settlement(df, support_amount):
     # 중복 제거 정확도를 위해 키 텍스트 컬럼의 앞뒤 공백을 정규화
     for c in KEY_COLS:
         df[c] = df[c].astype(str).str.strip()
+
+    # pivot index 키(협력회사명/사업자등록번호/기업규모)는 NaN·공백이면 그룹에서
+    # 통째로 누락되므로, 클러스터 전체를 명시 라벨로 정규화한다.
+    # (협력회사명은 위 KEY_COLS 처리로 NaN→'nan'이 되었던 것도 여기서 함께 정리됨)
+    for c in INDEX_COLS:
+        df[c] = _normalize_index_key(df[c], INDEX_FILL[c])
 
     unique_passengers = df[REQUIRED_COLS].drop_duplicates().reset_index(drop=True)
 
